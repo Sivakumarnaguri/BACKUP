@@ -1,32 +1,21 @@
 #!/bin/bash
 
-# Path to the log file
 LOG_FILE="/tmp/1672396-linux-monitoring-database-query-performance/db_queries.log"
 
-# Use awk to process the file
 awk '
-BEGIN {
-  RS="\n\n";  # Each record is separated by a blank line
-}
-{
-  # Extract lines from the current block
-  datetime_line = $1;
-  query_id_line = $2;
-  third_line = $3;
+BEGIN { RS=""; count=0 }
+/[0-9]+\n[0-9a-fA-F\-]+\n[0-9]+ +SUCCESS/ {
+  # Get execution time and status
+  split($0, lines, "\n")
+  split(lines[3], parts, " ")
+  exec_time = parts[1]
+  status = parts[2]
 
-  # Split the third line into exec_time and status
-  split(third_line, parts, " ");
-  exec_time = parts[1];
-  status = parts[2];
-
-  # Trim leading/trailing whitespace from status
-  gsub(/^ +| +$/, "", status);
+  gsub(/^ +| +$/, "", status)
 
   if (status == "SUCCESS" && exec_time > 2000) {
-    count++;
+    count++
   }
 }
-END {
-  print count + 0;
-}
+END { print count }
 ' "$LOG_FILE"

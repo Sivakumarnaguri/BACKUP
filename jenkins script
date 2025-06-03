@@ -2,20 +2,23 @@
 
 LOG_FILE="/tmp/1672396-linux-monitoring-database-query-performance/db_queries.log"
 
-awk '
-BEGIN { RS=""; count=0 }
-/[0-9]+\n[0-9a-fA-F\-]+\n[0-9]+ +SUCCESS/ {
-  # Get execution time and status
-  split($0, lines, "\n")
-  split(lines[3], parts, " ")
-  exec_time = parts[1]
-  status = parts[2]
+count=0
+line_num=0
 
-  gsub(/^ +| +$/, "", status)
+while IFS= read -r line; do
+  ((line_num++))
+  case $((line_num % 3)) in
+    1) datetime="$line" ;;
+    2) query_id="$line" ;;
+    0)
+      exec_time=$(echo "$line" | awk '{print $1}')
+      status=$(echo "$line" | awk '{print $2}' | xargs)  # trim whitespace
 
-  if (status == "SUCCESS" && exec_time > 2000) {
-    count++
-  }
-}
-END { print count }
-' "$LOG_FILE"
+      if [[ "$status" == "SUCCESS" && "$exec_time" -gt 2000 ]]; then
+        ((count++))
+      fi
+      ;;
+  esac
+done < "$LOG_FILE"
+
+echo "$count"

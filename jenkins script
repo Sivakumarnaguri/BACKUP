@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Define the log file path
+
 log_file="/tmp/1671700-linux-backup-storage-review/disk_usage.log"
 
-# Initialize total size in KB
+
 total_kb=0
 
-# Process each line in the log file
+
 while read -r line; do
     # Extract size (first field) and filename (rest of the line)
     size_kb=$(echo "$line" | awk '{print $1}')
@@ -16,8 +16,8 @@ while read -r line; do
     fi
 done < "$log_file"
 
-# Convert KB to MB (1024KB = 1MB) and format to 2 decimal places
+
 total_mb=$(echo "scale=2; $total_kb / 1024" | bc)
 
-# Display the result with MB suffix
+
 echo "${total_mb} MB"

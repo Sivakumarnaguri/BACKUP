@@ -1,23 +1,34 @@
-#!/bin/bash
+---
+- name: Install and configure PHP CLI for CI pipelines
+  hosts: all
+  become: yes
 
+  vars:
+    php_ini_path: "/etc/php/7.4/cli/php.ini"  # Change 7.4 to match your system's PHP version if needed
 
-log_file="/tmp/1671700-linux-backup-storage-review/disk_usage.log"
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
 
+    - name: Install PHP CLI and required extensions
+      apt:
+        name:
+          - php-cli
+          - php-gd
+          - php-mbstring
+          - php-xml
+          - php-curl
+        state: present
 
-total_kb=0
+    - name: Ensure memory_limit is set to 256M
+      lineinfile:
+        path: "{{ php_ini_path }}"
+        regexp: '^memory_limit\s*='
+        line: 'memory_limit = 256M'
 
-
-while read -r line; do
-   
-    size_kb=$(echo "$line" | awk '{print $1}')
-    
-    if [[ "$size_kb" =~ ^[0-9]+$ ]] && [ "$size_kb" -gt 5120 ]; then
-        total_kb=$((total_kb + size_kb))
-    fi
-done < "$log_file"
-
-
-total_mb=$(echo "scale=2; $total_kb / 1024" | bc)
-
-
-echo "${total_mb} MB"
+    - name: Ensure max_input_vars is set to 2000
+      lineinfile:
+        path: "{{ php_ini_path }}"
+        regexp: '^max_input_vars\s*='
+        line: 'max_input_vars = 2000'

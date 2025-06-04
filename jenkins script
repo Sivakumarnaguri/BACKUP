@@ -8,9 +8,9 @@ total_kb=0
 
 
 while read -r line; do
-    # Extract size (first field) and filename (rest of the line)
+   
     size_kb=$(echo "$line" | awk '{print $1}')
-    # Check if size is a number and greater than 5120KB (5MB)
+    
     if [[ "$size_kb" =~ ^[0-9]+$ ]] && [ "$size_kb" -gt 5120 ]; then
         total_kb=$((total_kb + size_kb))
     fi

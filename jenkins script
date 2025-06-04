@@ -1,9 +1,23 @@
 #!/bin/bash
 
-LOG_FILE="/tmp/1671700-linux-backup-storage-review/disk_usage.log"
+# Define the log file path
+log_file="/tmp/1671700-linux-backup-storage-review/disk_usage.log"
 
-# Filter lines with size > 5120 KB (i.e., > 5MB), sum them
-total_kb=$(awk '$1+0 > 5120 {sum += $1} END {print sum+0}' "$LOG_FILE")
+# Initialize total size in KB
+total_kb=0
 
-# Convert total KB to MB, round to two decimal places, and append MB
-awk -v kb="$total_kb" 'BEGIN {printf "%.2f MB\n", kb / 1024}'
+# Process each line in the log file
+while read -r line; do
+    # Extract size (first field) and filename (rest of the line)
+    size_kb=$(echo "$line" | awk '{print $1}')
+    # Check if size is a number and greater than 5120KB (5MB)
+    if [[ "$size_kb" =~ ^[0-9]+$ ]] && [ "$size_kb" -gt 5120 ]; then
+        total_kb=$((total_kb + size_kb))
+    fi
+done < "$log_file"
+
+# Convert KB to MB (1024KB = 1MB) and format to 2 decimal places
+total_mb=$(echo "scale=2; $total_kb / 1024" | bc)
+
+# Display the result with MB suffix
+echo "${total_mb} MB"

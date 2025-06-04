@@ -1,28 +1,11 @@
----
-- name: Deploy PHP Example Stack
-  hosts: localhost
-  become: true
-  tasks:
+#!/bin/bash
 
-    - name: Start MySQL container
-      docker_container:
-        name: db
-        image: mysql:5.7
-        state: started
-        restart_policy: always
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: example
-        ports:
-          - "3306:3306"
+# Path to the log file
+LOG_FILE="/tmp/1671700-linux-backup-storage-review/disk_usage.log"
 
-    - name: Start PHP Example Web container
-      docker_container:
-        name: web
-        image: problemsetters/801133-ansible
-        state: started
-        restart_policy: always
-        links:
-          - db
-        ports:
-          - "8000:80"
+# Extract sizes > 5120 KB, sum them
+total_kb=$(awk '$1 > 5120 {sum += $1} END {print sum}' "$LOG_FILE")
+
+# Convert to MB and format to 2 decimal places
+total_mb=$(awk -v kb="$total_kb" 'BEGIN {printf "%.2f MB\n", kb / 1024}')
+echo "$total_mb"

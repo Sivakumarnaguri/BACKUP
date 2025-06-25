@@ -1,34 +1,32 @@
 ---
-- name: Install and configure PHP CLI for CI pipelines
-  hosts: all
-  become: yes
-
+- name: Setup HackerBoard credentials.ini
+  hosts: localhost
+  become: true
   vars:
-    php_ini_path: "/etc/php/7.4/cli/php.ini"  # Change 7.4 to match your system's PHP version if needed
-
+    credentials_path: "{{ lookup('env', 'HACKERBOARD_DIR') }}/credentials.ini"
+    access_key: "{{ lookup('env', 'HACKERBOARD_ACCESS_KEY') }}"
   tasks:
-    - name: Update apt package index
-      apt:
-        update_cache: yes
 
-    - name: Install PHP CLI and required extensions
-      apt:
-        name:
-          - php-cli
-          - php-gd
-          - php-mbstring
-          - php-xml
-          - php-curl
+    - name: Ensure hackerboard user exists
+      ansible.builtin.user:
+        name: hackerboard
         state: present
 
-    - name: Ensure memory_limit is set to 256M
-      lineinfile:
-        path: "{{ php_ini_path }}"
-        regexp: '^memory_limit\s*='
-        line: 'memory_limit = 256M'
+    - name: Ensure hackercompany group exists
+      ansible.builtin.group:
+        name: hackercompany
+        state: present
 
-    - name: Ensure max_input_vars is set to 2000
-      lineinfile:
-        path: "{{ php_ini_path }}"
-        regexp: '^max_input_vars\s*='
-        line: 'max_input_vars = 2000'
+    - name: Add hackerboard user to hackercompany group
+      ansible.builtin.user:
+        name: hackerboard
+        groups: hackercompany
+        append: yes
+
+    - name: Generate credentials.ini from template
+      ansible.builtin.template:
+        src: credentials.ini.j2
+        dest: "{{ credentials_path }}"
+        owner: hackerboard
+        group: hackercompany
+        mode: '0640'
